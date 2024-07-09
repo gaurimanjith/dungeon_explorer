@@ -1,6 +1,7 @@
 """
 graphics engine for 2D games
 """
+
 import os
 import numpy as np
 import cv2
@@ -56,38 +57,45 @@ def draw_tile(frame, x, y, image, xbase=0, ybase=0):
 def draw(game, images):
     # initialize screen
     frame = np.zeros((SCREEN_SIZE_Y, SCREEN_SIZE_X, 3), np.uint8)
-    cv2.putText(frame,
-            str(game.coins),
-            org=(730, 78),
-            fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-            fontScale=1.5,
-            color=(95, 200, 150),
-            thickness=3,
-            )
-    
-     #draw coin icon 
-    draw_tile(frame, x=10, y=0, image=images["coin"], xbase=20, ybase=35)
-     # draw dungeon tiles
+    cv2.putText(
+        frame,
+        str(game.coins),
+        org=(730, 78),
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=1.5,
+        color=(95, 200, 150),
+        thickness=3,
+    )
+    SYMBOLS = {
+        ".": "floor",
+        "#": "wall",
+        "F": "fountain",
+        "&": "dragon",
+        "S": "stairs_up",
+        "$": "coin",
+        "X": "trap",
+        "K": "key",
+        "D": "open_door",
+        "d": "closed_door",
+        "P": "potion",
+    }
+    # draw dungeon tiles,wall,fountain,dragon,stairs_up,coin
     for y, row in enumerate(game.level):
         for x, tile in enumerate(row):
-            if tile == ".":
-                draw_tile(frame, x=x, y=y, image=images["floor"])
-            if tile == "#":
-                draw_tile(frame, x=x, y=y, image=images["wall"])
-            if tile == "F":
-                draw_tile(frame, x=x, y=y, image=images["fountain"])
-            if tile == "D":
-                draw_tile(frame, x=x, y=y, image=images["dragon"])
-            if tile == "S":
-                draw_tile(frame, x=x, y=y, image=images["stairs_up"])
-            if tile == "$":
-                draw_tile(frame, x=x, y=y, image=images["coin"])
-     # draw player
+            draw_tile(frame, x=x, y=y, image=images[SYMBOLS[tile]])
+    # draw coin icon
+    draw_tile(frame, x=10, y=0, image=images["coin"], xbase=20, ybase=35)
+    # draw player
     draw_tile(frame, x=game.x, y=game.y, image=images["player"])
-    # draw the heath bar
-    frame[130:50 + game.health, 730:830] = (70, 50, 255)
+    # draw the health bar
+    frame[190 : 190 + game.health, 730:770] = (70, 50, 255)
     # put a heart symbol next to health
-    draw_tile(frame, x=10, y=1, image=images["heart"], xbase=19, ybase=50)
+    draw_tile(frame, x=10, y=1, image=images["heart"], xbase=75, ybase=50)
+    # display the inventory
+    for i, item in enumerate(game.items):
+        y = i // 2  # floor division: rounded down
+        x = i % 2  # modulo: remainder of an integer division
+        draw_tile(frame, xbase=680, ybase=410, x=x, y=y, image=images[item])
     # display complete image
     cv2.imshow(GAME_TITLE, frame)
 
@@ -107,10 +115,12 @@ game = start_game()
 while game.status == "running":
 
     draw(game, images)
+
     # health check
     def update(game):
         if game.health <= 0:
             game.status = "game over"
+
     handle_keyboard(game)
 
 cv2.destroyAllWindows()
