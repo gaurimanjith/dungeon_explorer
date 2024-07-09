@@ -22,6 +22,9 @@ MOVES = {
 #
 # constants measured in pixels
 #
+screen = cv2.namedWindow(GAME_TITLE, cv2.WND_PROP_FULLSCREEN)
+screen_size_x = int(cv2.getWindowProperty(GAME_TITLE, cv2.WND_PROP_FULLSCREEN))
+screen_size_y = int(cv2.getWindowProperty(GAME_TITLE, cv2.WND_PROP_FULLSCREEN))
 SCREEN_SIZE_X, SCREEN_SIZE_Y = 1470,831
 TILE_SIZE = 64
 
