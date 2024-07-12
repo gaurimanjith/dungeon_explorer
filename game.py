@@ -1,7 +1,16 @@
 
 import random
+import pygame
 from pydantic import BaseModel
 from datetime import datetime
+
+#Initialize Pygame mixer
+pygame.mixer.init()
+# Load sound effects
+coin_collect_sound = pygame.mixer.Sound("coin.mp3")
+fireball_hit_sound = pygame.mixer.Sound("explosion.mp3")
+elf_collect_sound = pygame.mixer.Sound("elf.mp3")
+trap_fall_sound = pygame.mixer.Sound("stop.mp3")
 
 class Switch(BaseModel):
     x:int
@@ -95,14 +104,14 @@ def parse_level(level):
 LEVEL_ONE = Level(
                 level=parse_level([
                     "#####################",
-                    "#$.K..P#.$..KKKP.#X$#",
-                    "#....$P#.$#......#$X#",
-                    "#XX$..X####......#X$#",
-                    "#...###..K..XXX###$X#",
+                    "#$.K..P#.$....SP.#X$#",
+                    "#....$P#.$#...KKK#X$#",
+                    "#XX$..X####......#.$#",
+                    "#...###K....XXX###$X#",
                     "#..X#$XXX.....##...$#",
                     "#...#..######.#..####",
                     "#d#.#...$$$...#..#.S#",
-                    "#r#.#..$......#.K####",
+                    "#r#.#..$......#.$####",
                     "###.$$X.$...........#",
                     "#K.......X$$X.#..$$$#",
                     "#####################"
@@ -121,11 +130,11 @@ LEVEL_ONE = Level(
                 
             )
 LEVEL_TWO = Level(level=parse_level([
-                "#S###################",
-                "#..K....#.$...#.ddd.#",
-                "#.......#.$$..#.#####",
-                "#..$$...#....$#.....#",
-                "#.......#..XX.#.....#",
+                "#####################",
+                "#S.K....#.$S..#.ddd.#",
+                "#......$#.$$..#.#####",
+                "#..$$.$$#....$#.....#",
+                "#r......#..XX.#.....#",
                 "#.X.#####.....#.X...#",
                 "#...#d...X..XX#.....#",
                 "#P#.#..X...$$$..X...#",
@@ -142,9 +151,15 @@ LEVEL_TWO = Level(level=parse_level([
                 Fireball(x=19, y=9, dir="left"),
                 Fireball(x=4, y=3, dir="right"),
                 Fireball(x=8, y=5, dir="up"),
-                Fireball(x=15, y=8, dir="left")
+                Fireball(x=15, y=8, dir="left"),
+                Fireball(x=4, y=2, dir="right")
             ],
-            skeletons=[Skeleton(x=2, y=5, dir="down"), Skeleton(x=8, y=4, dir="up"), Skeleton(x=11, y=8, dir="left")],
+            skeletons=[Skeleton(x=2, y=5, dir="down"), 
+                       Skeleton(x=8, y=4, dir="up"),
+                       Skeleton(x=11, y=8, dir="left"),
+                       Skeleton(x=3, y=4, dir="down"),
+                       Skeleton(x=5, y=3, dir="left")
+                       ],
             undead=[
                 Undead(x=18, y=9, dir="right"),
                 Undead(x=12, y=3, dir="down"),
@@ -161,8 +176,8 @@ LEVEL_THREE = Level(
                 "#s###################",    
                 "#P..$.#$$$......|..S#",
                 "#.|...#.............#",
-                "#..$..#....#...PPP.#",
-                "#.....#.###.########",
+                "#..$..#....#...PPP..#",
+                "#.....#.###.#########",
                 "#..$..#......|....d.#",
                 "#.K...##########..###",
                 "###...#|d......#....#",
@@ -196,12 +211,12 @@ LEVEL_FOUR = Level(
                 "#####################",
                 "#..P.............K..#",
                 "#.####.#####.##.#####",
-                "#.#K.#.q#.L.#.##.....#",
+                "#.#K.#.#.L.#.##.....#",
                 "#.#....##F##.##.#..P#",
                 "#.#..#.#...#.##.#...#",
                 "#....#.##d##.##.##.##",
                 "#.#..#.##.##P##.#...#",
-                "#.#..#.##d##.##.#...#",
+                "#.#..#.##d##.##.#..K#",
                 "#.#..#.##.##.##.#####",
                 "#..................P#",
                 "#s###################"
@@ -300,14 +315,49 @@ def move_undead(game):
                     u.x, u.y = x, y
                     break
 
+
+def get_opposite_direction(dir):
+    if dir == "right":
+        return "left"
+    elif dir == "left":
+        return "right"
+    elif dir == "up":
+        return "down"
+    elif dir == "down":
+        return "up"
+
 def move_rat(game):
-    for s in game.current_level.rats:
-        while True:
-            dir = random.choice(["up", "down", "left", "right"])
-            x, y = get_next_position(s.x, s.y, dir)
-            if game.current_level.level[y][x] in ".€k":
-                s.x, s.y = x, y
-                break
+    for rat in game.current_level.rats:
+        if "short_sword" in game.weapons:
+            # Run away from the player
+            best_direction = None
+            max_distance = -1
+            for dir in ["up", "down", "left", "right"]:
+                x, y = get_next_position(rat.x, rat.y, dir)
+                if game.current_level.level[y][x] in ".€k":
+                    distance = abs(game.x - x) + abs(game.y - y)
+                    if distance > max_distance:
+                        best_direction = dir
+                        max_distance = distance
+            if best_direction:
+                rat.x, rat.y = get_next_position(rat.x, rat.y, best_direction)
+        else:
+            # Chase the player
+            best_direction = None
+            min_distance = float('inf')
+            for dir in ["up", "down", "left", "right"]:
+                x, y = get_next_position(rat.x, rat.y, dir)
+                if game.current_level.level[y][x] in ".€k":
+                    distance = abs(game.x - x) + abs(game.y - y)
+                    if distance < min_distance:
+                        best_direction = dir
+                        min_distance = distance
+            if best_direction:
+                rat.x, rat.y = get_next_position(rat.x, rat.y, best_direction)
+
+
+
+
 
 def move_snake(game):
     for s in game.current_level.snakes:
@@ -331,9 +381,12 @@ def eye(game):
                game.y=4
                curse_time+=1
 
-def check_collision(game):
+def check_collision(game): #fireball
+    if game.elf_flag:  # Check if the elf has been collected
+        return  # If so, skip collision checks for fireballs
     for f in game.current_level.fireballs:
         if f.x == game.x and f.y == game.y:
+            fireball_hit_sound.play()  # Play fireball hit sound
             game.health -= 15
 
 def check_collision_skeleton(game):
@@ -342,11 +395,15 @@ def check_collision_skeleton(game):
     
     for s in game.current_level.skeletons:
         if s.x == game.x and s.y == game.y:
+            trap_fall_sound.play() 
             game.health -= 10
 
 def check_collision_undead(game):
+    if game.elf_flag:  # Check if the elf has been collected
+        return  # If so, skip collision checks for undead
     for u in game.current_level.undead:
             if u.x == game.x and u.y == game.y:
+                trap_fall_sound.play() 
                 game.health -= 10
 
 def check_collision_rat(game):
@@ -367,6 +424,7 @@ def check_collision_snake(game):
 def collect_elf(game):
     for e in game.current_level.elf:
         if game.x == e.x and game.y == e.y:
+            elf_collect_sound.play()  # Play fireball hit sound
             e.flag = True
             game.elf_flag = True
             game.elf_collected_time = datetime.now()  # Record the time when the elf is collected
@@ -443,6 +501,7 @@ def move_player(game, direction: str) -> None:
         y += 1
 
     if game.current_level.level[y][x] == "K":
+        coin_collect_sound.play() 
         game.items.append("key")
         game.current_level.level[y][x] = "."
     
@@ -459,6 +518,7 @@ def move_player(game, direction: str) -> None:
         game.current_level.level[y][x] = "."
     
     elif game.current_level.level[y][x] == "$":
+        coin_collect_sound.play()  
         game.current_level.level[y][x] = "."
         game.coins += 1
 
@@ -472,6 +532,7 @@ def move_player(game, direction: str) -> None:
         game.weapons.append("short_sword")
 
     elif game.current_level.level[y][x] == "P":
+        elf_collect_sound.play()
         game.current_level.level[y][x] = "."
         game.health += 20
 
@@ -480,15 +541,18 @@ def move_player(game, direction: str) -> None:
         game.health += 40
 
     elif game.current_level.level[y][x] == "X":
+        trap_fall_sound.play() 
         game.current_level.level[y][x] = "."
         game.health -= 17
 
     if game.current_level.level[y][x] == "A":
         game.armor_flag=True
         game.current_level.level[y][x] = "."
+
     if game.current_level.level[y][x] == "F":
-        if game.coins>2 :
+        if game.coins>42 :
             game.current_level.level[y][x] = "."
+
     if game.current_level.level[y][x] in ".%D":
         game.x, game.y = x, y
 
@@ -505,10 +569,10 @@ def move_player(game, direction: str) -> None:
         game.level_number -=1
         game.current_level=LEVELS[game.level_number]
     #LEVEL UP
-    if game.current_level.level[y][x] == "S" and game.current_level=="LEVEL_THREE":
-        if(game.current_level.rats==[None]) :
+    if game.current_level.level[y][x] == "S" and game.current_level==LEVEL_THREE:
+        if (game.current_level.rats==[]) :
             game.level_number += 1
-    elif game.current_level.level[y][x] == "S" and game.current_level!="LEVEL_THREE":
+    elif game.current_level.level[y][x] == "S" and game.current_level!=LEVEL_THREE:
             game.level_number += 1
     if game.level_number < len(LEVELS):
         # move to next level

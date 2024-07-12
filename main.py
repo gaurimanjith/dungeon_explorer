@@ -252,7 +252,7 @@ while game.status == "running":
     draw(game, images)
     # health check
     if game.current_level=="THREE" :
-        if counter%10==0:
+        if counter%2==0:
             update(game)
     else  :
             if(counter%30==0):

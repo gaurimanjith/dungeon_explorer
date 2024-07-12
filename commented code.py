@@ -544,3 +544,66 @@ def handle_cursor_click(game, cursor_x, cursor_y):
                     f.dir="up"
                 x, y = get_next_position(f.x, f.y, f.dir)
                 f.x, f.y = x, y
+
+
+
+
+
+
+ def get_opposite_direction(dir):
+    if dir == "right":
+        return "left"
+    elif dir == "left":
+        return "right"
+    elif dir == "up":
+        return "down"
+    elif dir == "down":
+        return "up"
+
+def move_rat(game):
+    for rat in game.current_level.rats:
+        if "short_sword" in game.weapons:
+            # Run away from the player
+            best_direction = None
+            max_distance = -1
+            for dir in ["up", "down", "left", "right"]:
+                x, y = get_next_position(rat.x, rat.y, dir)
+                if game.current_level.level[y][x] in ".€k":
+                    distance = abs(game.x - x) + abs(game.y - y)
+                    if distance > max_distance:
+                        best_direction = dir
+                        max_distance = distance
+            if best_direction:
+                rat.x, rat.y = get_next_position(rat.x, rat.y, best_direction)
+        else:
+            # Chase the player
+            best_direction = None
+            min_distance = float('inf')
+            for dir in ["up", "down", "left", "right"]:
+                x, y = get_next_position(rat.x, rat.y, dir)
+                if game.current_level.level[y][x] in ".€k":
+                    distance = abs(game.x - x) + abs(game.y - y)
+                    if distance < min_distance:
+                        best_direction = dir
+                        min_distance = distance
+            if best_direction:
+                rat.x, rat.y = get_next_position(rat.x, rat.y, best_direction)
+
+
+
+
+
+
+
+50 coins in total
+
+''(game.current_level.rats==[])''' 
+
+'''def move_rat(game):
+    for s in game.current_level.rats:
+        while True:
+            dir = random.choice(["up", "down", "left", "right"])
+            x, y = get_next_position(s.x, s.y, dir)
+            if game.current_level.level[y][x] in ".€k":
+                s.x, s.y = x, y
+                break'''
