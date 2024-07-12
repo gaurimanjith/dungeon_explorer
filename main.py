@@ -39,9 +39,9 @@ def display_screen(image_path, window_name, text_lines=None):
         # Calculate the starting y position to center vertically
         text_y = (img.shape[0] - total_text_height) // 2
 
-        # Render each line of text
+    
         for line in text_lines:
-            # Get the size of the text to be placed
+            #size
             text_size, _ = cv2.getTextSize(line, font, font_scale, line_thickness)
 
             # Calculate position to center the text horizontally

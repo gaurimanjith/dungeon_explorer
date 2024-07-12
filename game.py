@@ -131,27 +131,27 @@ LEVEL_ONE = Level(
             )
 LEVEL_TWO = Level(level=parse_level([
                 "#####################",
-                "#S.K....#.$S..#.ddd.#",
+                "#s.K....#.$S..#.ddd.#",
                 "#......$#.$$..#.#####",
                 "#..$$.$$#....$#.....#",
-                "#r......#..XX.#.....#",
+                "#.......#..XX.#.....#",
                 "#.X.#####.....#.X...#",
-                "#...#d...X..XX#.....#",
-                "#P#.#..X...$$$..X...#",
-                "##..#.XX...#####XXX.#",
-                "##.X$$XX$..#...#....#",
-                "#K.X.X..../#####...s#",
+                "#...#P#..X...X#.....#",
+                "#r#.#d.X...$$$..X...#",
+                "##..#..X...#####X..X#",
+                "##.X$$.X$..#...#....#",
+                "#K.X.X..../#####...S#",
                 "#####################"
             ]),
             switches=[Switch(x=19,y=1)],
-            teleporters=[Teleporter(x=4, y=2, target_x=13, target_y=7), Teleporter(x=9, y=7, target_x=2, target_y=1)],
+            teleporters=[Teleporter(x=4, y=2, target_x=19, target_y=7), Teleporter(x=9, y=7, target_x=2, target_y=1)],
             fireballs=[
                 Fireball(x=11, y=7, dir="left"),
                 Fireball(x=6, y=5, dir="down"),
                 Fireball(x=19, y=9, dir="left"),
                 Fireball(x=4, y=3, dir="right"),
                 Fireball(x=8, y=5, dir="up"),
-                Fireball(x=15, y=8, dir="left"),
+                Fireball(x=15, y=8, dir="up"),
                 Fireball(x=4, y=2, dir="right")
             ],
             skeletons=[Skeleton(x=2, y=5, dir="down"), 
@@ -174,8 +174,8 @@ LEVEL_TWO = Level(level=parse_level([
 LEVEL_THREE = Level(
             level=parse_level([
                 "#s###################",    
-                "#P..$.#$$$......|..S#",
-                "#.|...#.............#",
+                "#P..$.#$$$.........S#",
+                "#.|...#............|#",
                 "#..$..#....#...PPP..#",
                 "#.....#.###.#########",
                 "#..$..#......|....d.#",
@@ -315,16 +315,6 @@ def move_undead(game):
                     u.x, u.y = x, y
                     break
 
-
-def get_opposite_direction(dir):
-    if dir == "right":
-        return "left"
-    elif dir == "left":
-        return "right"
-    elif dir == "up":
-        return "down"
-    elif dir == "down":
-        return "up"
 
 def move_rat(game):
     for rat in game.current_level.rats:
@@ -538,7 +528,7 @@ def move_player(game, direction: str) -> None:
 
     elif game.current_level.level[y][x] == "r":
         game.current_level.level[y][x] = "."
-        game.health += 40
+        game.health += 60
 
     elif game.current_level.level[y][x] == "X":
         trap_fall_sound.play() 
